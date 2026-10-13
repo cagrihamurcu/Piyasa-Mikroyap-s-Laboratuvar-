@@ -2,204 +2,305 @@
 import streamlit as st
 
 st.set_page_config(
-    page_title="Piyasa Mikroyapısı Oyunu",
-    page_icon="📊",
+    page_title="Piyasa Mikroyapısı Uygulaması",
+    page_icon="📈",
     layout="centered"
 )
 
-def tl(x):
-    return f"{x:.2f} TL".replace(".", ",")
+# -------------------------------------------------
+# SESSION STATE
+# -------------------------------------------------
+for key, default in {
+    "puan": 0,
+    "g1": False,
+    "g2": False,
+    "g3": False,
+}.items():
+    if key not in st.session_state:
+        st.session_state[key] = default
 
-if "puan" not in st.session_state:
-    st.session_state.puan = 0
-if "g1" not in st.session_state:
-    st.session_state.g1 = False
-if "g2" not in st.session_state:
-    st.session_state.g2 = False
-if "g3" not in st.session_state:
-    st.session_state.g3 = False
 
-st.title("📊 Piyasa Mikroyapısı Oyunu")
+def add_points(flag, points):
+    if not st.session_state[flag]:
+        st.session_state[flag] = True
+        st.session_state.puan += points
+
+
+# -------------------------------------------------
+# HEADER
+# -------------------------------------------------
+st.title("📈 Piyasa Mikroyapısı Uygulaması")
+
 st.write(
     """
-Bu uygulamada amaç **formül ezberlemek değil**.
+Bu uygulamada amaç, derste gördüğümüz kavramları kısa örneklerle
+**görmek, yorumlamak ve birbirine bağlamaktır.**
 
-Amaç, bir emrin piyasada ne yaptığını **görerek ve deneyerek** öğrenmek.
-
-Toplam 3 kısa görev var.
+Uygulama üç kısa görevden oluşur.
 """
 )
 
-tamamlanan = sum([st.session_state.g1, st.session_state.g2, st.session_state.g3])
-st.progress(tamamlanan / 3)
-st.metric("Toplam Puan", f"{st.session_state.puan}/100")
+done = sum([st.session_state.g1, st.session_state.g2, st.session_state.g3])
+st.progress(done / 3)
+st.metric("Puan", f"{st.session_state.puan}/100")
 
 st.divider()
 
-st.header("🎯 Görev 1 — Hangi Piyasa Daha Rahat?")
+# =================================================
+# GÖREV 1
+# =================================================
+st.header("🎯 Görev 1 — Spread ve Piyasa Derinliği")
 
-st.write(
+st.subheader("Önce kavramları hatırlayalım")
+
+st.markdown(
     """
-Aynı büyüklükte bir **piyasa alış emri** iki farklı piyasaya gönderiliyor.
+**Spread nedir?**  
+En iyi alış fiyatı ile en iyi satış fiyatı arasındaki farktır.
 
-**Piyasa A**
-- Spread dar
-- Emir defteri derin
+- **Dar spread:** alış ve satış fiyatları birbirine daha yakındır.
+- **Geniş spread:** alış ve satış fiyatları birbirinden daha uzaktır.
 
-**Piyasa B**
-- Spread geniş
-- Emir defteri sığ
+**Piyasa derinliği nedir?**  
+Farklı fiyat seviyelerinde ne kadar alış ve satış emri bulunduğunu gösterir.
 
-Sizce büyük emir hangi piyasada fiyatı daha fazla hareket ettirir?
+- **Derin piyasa:** daha fazla alış ve satış emri vardır.
+- **Sığ piyasa:** daha az alış ve satış emri vardır.
+
+**Önemli:**  
+Dar spread tek başına yüksek likidite anlamına gelmez.
 """
 )
 
-cevap1 = st.radio(
+st.subheader("Şimdi karşılaştıralım")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    st.markdown(
+        """
+### Piyasa A
+- Spread **dar**
+- Piyasa derinliği **yüksek**
+"""
+    )
+
+with col2:
+    st.markdown(
+        """
+### Piyasa B
+- Spread **geniş**
+- Piyasa derinliği **düşük**
+"""
+    )
+
+st.write(
+    """
+Aynı büyüklükte büyük bir **piyasa alış emri** iki piyasaya da gönderiliyor.
+
+Sizce hangi piyasada fiyat daha fazla hareket edebilir?
+"""
+)
+
+q1 = st.radio(
     "Seçiminiz:",
     ["Piyasa A", "Piyasa B"],
     index=None,
-    key="cevap1"
+    key="q1"
 )
 
-if st.button("Cevabı Göster", key="btn1"):
-    if cevap1 == "Piyasa B":
-        st.success("✅ Doğru!")
-        st.write(
+if st.button("Cevabı kontrol et", key="check1"):
+    if q1 == "Piyasa B":
+        st.success("✅ Doğru")
+        st.markdown(
             """
-Sığ piyasada karşı tarafta daha az emir vardır.
+Piyasa B daha sığdır.
 
-Büyük piyasa emri mevcut emirleri daha hızlı tüketir ve daha kötü fiyatlara doğru ilerleyebilir.
+Piyasa derinliği düşük olduğunda büyük bir piyasa emri mevcut emirleri daha hızlı tüketebilir
+ve işlem farklı fiyat seviyelerinden gerçekleşebilir.
 
-**Öğrenilen fikir:**  
-👉 Derinlik azaldıkça büyük emrin fiyat etkisi artabilir.
+**Temel fikir:**  
+👉 Piyasa derinliği azaldıkça büyük emirlerin fiyat etkisi artabilir.
 """
         )
-        if not st.session_state.g1:
-            st.session_state.g1 = True
-            st.session_state.puan += 30
-    elif cevap1 == "Piyasa A":
+        add_points("g1", 30)
+
+    elif q1 == "Piyasa A":
         st.warning("Bir kez daha düşünün.")
-        st.write("Derin piyasa, büyük emirleri daha az fiyat hareketiyle karşılayabilir.")
+        st.write(
+            "Derin piyasa, büyük emirleri daha sınırlı fiyat hareketiyle karşılayabilir."
+        )
     else:
         st.info("Önce bir seçenek işaretleyin.")
 
 st.divider()
 
-st.header("💸 Görev 2 — Spread Ne Anlatıyor?")
+# =================================================
+# GÖREV 2
+# =================================================
+st.header("💸 Görev 2 — Spread Ne Anlatır?")
 
-st.write(
+st.subheader("Önce kavramları hatırlayalım")
+
+st.markdown(
     """
-Bir pay için:
+**Bid:** piyasadaki en yüksek alış fiyatıdır.  
+**Ask:** piyasadaki en düşük satış fiyatıdır.
 
-- **Bid = 99,80 TL**
-- **Ask = 100,20 TL**
+**Spread = Ask − Bid**
 
-Önce spread'i hesaplayalım.
-"""
-)
-
-bid = 99.80
-ask = 100.20
-spread = ask - bid
-
-if st.button("Spread'i Hesapla", key="btn2calc"):
-    st.info(f"Spread = Ask − Bid = **{tl(spread)}**")
-
-cevap2 = st.radio(
-    "Spread'in genişlemesi genellikle neyi gösterir?",
-    [
-        "İşlem maliyetinin ve likidite riskinin artabileceğini",
-        "Piyasanın kesin olarak daha likit olduğunu",
-        "Şirket değerinin kesin olarak arttığını"
-    ],
-    index=None,
-    key="cevap2"
-)
-
-if st.button("Yorumu Kontrol Et", key="btn2"):
-    if cevap2 == "İşlem maliyetinin ve likidite riskinin artabileceğini":
-        st.success("✅ Doğru!")
-        st.write(
-            """
 Spread yalnızca iki fiyat arasındaki fark değildir.
 
-Aynı zamanda piyasanın işlem maliyeti ve likiditesi hakkında bilgi verir.
+Aynı zamanda piyasanın:
 
-**Öğrenilen fikir:**  
-👉 Spread genişledikçe işlem yapmak genellikle daha pahalı hale gelir.
+- işlem maliyeti,
+- likiditesi,
+- bilgi ve risk düzeyi
+
+hakkında fikir verebilir.
+"""
+)
+
+st.subheader("Kısa örnek")
+
+st.markdown(
+    """
+- **Bid = 99,80 TL**
+- **Ask = 100,20 TL**
+"""
+)
+
+if st.button("Spread'i göster", key="spread_calc"):
+    st.info("Spread = 100,20 − 99,80 = **0,40 TL**")
+
+st.write("Şimdi yorumlayalım.")
+
+q2 = st.radio(
+    "Spread genişlediğinde genel olarak hangi yorum daha uygundur?",
+    [
+        "İşlem maliyeti artabilir ve likidite azalabilir.",
+        "Şirketin temel değeri kesin olarak artmıştır.",
+        "Piyasa mutlaka daha derindir."
+    ],
+    index=None,
+    key="q2"
+)
+
+if st.button("Yorumu kontrol et", key="check2"):
+    if q2 == "İşlem maliyeti artabilir ve likidite azalabilir.":
+        st.success("✅ Doğru")
+        st.markdown(
+            """
+Spread genişlediğinde alış ve satış fiyatları birbirinden uzaklaşır.
+
+Bu durum, işlem yapmanın daha maliyetli hale geldiğine ve likiditenin zayıflayabileceğine işaret edebilir.
+
+**Temel fikir:**  
+👉 Spread, işlem maliyeti ve likidite hakkında bilgi verir.
 """
         )
-        if not st.session_state.g2:
-            st.session_state.g2 = True
-            st.session_state.puan += 30
-    elif cevap2:
-        st.warning("Bu yorum fazla kesin.")
-        st.write("Spread doğrudan şirketin temel değerini göstermez; daha çok işlem koşullarıyla ilgilidir.")
+        add_points("g2", 30)
+
+    elif q2:
+        st.warning("Bu yorum dersteki çerçeveyle uyumlu değil.")
+        st.write(
+            "Spread, şirketin temel değerini tek başına göstermez; daha çok işlem koşullarıyla ilgilidir."
+        )
     else:
         st.info("Önce bir seçenek işaretleyin.")
 
 st.divider()
 
-st.header("🧠 Görev 3 — Bilgi mi, Likidite mi?")
+# =================================================
+# GÖREV 3
+# =================================================
+st.header("🧠 Görev 3 — Bilgi Şoku mu, Likidite Şoku mu?")
 
-st.write(
+st.subheader("Önce kavramları hatırlayalım")
+
+st.markdown(
     """
-Bir payda aynı anda şu gelişmeler oluyor:
+**Bilgi şoku:**  
+Şirketle ilgili yeni bilgi gelir ve yatırımcıların değerleme beklentisi değişir.
+
+**Likidite şoku:**  
+Şirketle ilgili yeni bilgi olmadan büyük alış veya satış baskısı oluşur.
+
+Likidite şokuna örnek:
+
+- fon çıkışları,
+- portföy yeniden dengelemesi,
+- teminat ihtiyacı.
+"""
+)
+
+st.subheader("Vaka")
+
+st.markdown(
+    """
+Bir payın fiyatı kısa sürede düşüyor.
+
+Aynı anda:
 
 - spread genişliyor,
 - piyasa derinliği azalıyor,
-- büyük işlemler fiyatı daha fazla hareket ettiriyor,
+- büyük satışlar fiyatı daha fazla hareket ettiriyor,
 - bir süre sonra fiyatın bir kısmı geri geliyor,
-- şirket hakkında yeni bir haber yok.
-
-Bu durumda ilk akla gelmesi gereken nedir?
+- şirket hakkında yeni bir haber bulunmuyor.
 """
 )
 
-cevap3 = st.radio(
-    "Seçiminiz:",
+q3 = st.radio(
+    "Bu tablo için en uygun ilk yorum hangisidir?",
     [
-        "Likidite geçici olarak bozulmuş olabilir",
-        "Şirketin temel değeri kesin olarak düşmüştür",
-        "Piyasa tamamen etkin hale gelmiştir"
+        "Likidite şoku yaşanmış olabilir.",
+        "Şirketin temel değeri kesin olarak düşmüştür.",
+        "Fiyat hareketinin tamamı yeni bilgiden kaynaklanmıştır."
     ],
     index=None,
-    key="cevap3"
+    key="q3"
 )
 
-if st.button("Vakayı Çöz", key="btn3"):
-    if cevap3 == "Likidite geçici olarak bozulmuş olabilir":
-        st.success("✅ Doğru!")
-        st.write(
+if st.button("Vakayı kontrol et", key="check3"):
+    if q3 == "Likidite şoku yaşanmış olabilir.":
+        st.success("✅ Doğru")
+        st.markdown(
             """
-Yeni haber yoksa ve fiyat daha sonra kısmen geri dönüyorsa,
-hareketin bir kısmı **geçici likidite etkisi** olabilir.
+Şirket hakkında yeni bilgi olmadan büyük satış baskısı oluşması,
+likidite şoku ile uyumludur.
 
-**Öğrenilen fikir:**  
+Fiyatın daha sonra kısmen geri dönmesi de hareketin bir bölümünün
+geçici likidite etkisi taşıyabileceğini düşündürür.
+
+**Temel fikir:**  
 👉 Her fiyat hareketi yeni bilgi anlamına gelmez.
 """
         )
-        if not st.session_state.g3:
-            st.session_state.g3 = True
-            st.session_state.puan += 40
-    elif cevap3:
-        st.warning("Bu sonuç için yeterli kanıt yok.")
-        st.write("Tek başına fiyat düşüşü, şirketin temel değerinin değiştiğini kanıtlamaz.")
+        add_points("g3", 40)
+
+    elif q3:
+        st.warning("Bu kadar kesin bir sonuca varamayız.")
+        st.write(
+            "Fiyatın düşmesi tek başına bunun bilgi şokundan kaynaklandığını göstermez."
+        )
     else:
         st.info("Önce bir seçenek işaretleyin.")
 
 st.divider()
 
+# =================================================
+# SONUÇ
+# =================================================
 st.header("🏁 Sonuç")
 
 if st.session_state.puan == 100:
     st.balloons()
-    st.success("Tebrikler! 3 görevi de tamamladınız. 🎉")
-    st.write(
+    st.success("Tebrikler! Tüm görevleri tamamladınız. 🎉")
+    st.markdown(
         """
-Bugünün 3 ana mesajı:
+Bugünün üç ana mesajı:
 
-1. **Derinlik azaldıkça büyük emirlerin fiyat etkisi artabilir.**
+1. **Piyasa derinliği azaldıkça büyük emirlerin fiyat etkisi artabilir.**
 2. **Spread, işlem maliyeti ve likidite hakkında bilgi verir.**
 3. **Her fiyat hareketi yeni bilgi anlamına gelmez.**
 """
@@ -209,4 +310,6 @@ elif st.session_state.puan >= 60:
 else:
     st.write("Görevleri tamamladıkça puanınız artacak.")
 
-st.caption("Ders uygulaması — Pay Piyasası, Emirler ve Piyasa Mikroyapısı")
+st.caption(
+    "Ders uygulaması — Pay Piyasası, Emirler ve Piyasa Mikroyapısı"
+)
